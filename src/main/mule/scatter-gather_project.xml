@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="dbc67b87-10f5-4a6e-b33f-931589370ce9" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="70a0c3cd-77ec-468a-ba8a-f4880958f3e9" >
+		<db:my-sql-connection host="localhost" port="3306" user="root" password="2029" />
+	</db:config>
+	<db:config name="Database_Config1" doc:name="Database Config" doc:id="4b755153-646e-4802-baa5-d1f3f57f163b" >
+		<db:my-sql-connection host="localhost" port="3306" user="root" password="2029" />
+	</db:config>
+	<flow name="scatter-gather_projectFlow" doc:id="f7b8392b-2ba6-43b3-a2d3-a3f2eb6c2a4b" >
+		<http:listener doc:name="Listener" doc:id="3a600872-00f1-4cad-8c5c-6500129c4f6b" config-ref="HTTP_Listener_config" path="/world"/>
+		<scatter-gather doc:name="Scatter-Gather" doc:id="0ccd673a-9a8a-406b-92eb-312c98a06605" >
+			<route >
+				<db:select doc:name="world_city" doc:id="3dc96a97-9829-41b3-bf75-086ed9397d0b" config-ref="Database_Config">
+					<db:sql ><![CDATA[SELECT * FROM world.city;]]></db:sql>
+				</db:select>
+				<ee:transform doc:name="Transform Message" doc:id="935de36d-54d0-43ff-b25c-bf143c39230d" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</route>
+			<route >
+				<db:select doc:name="country_language" doc:id="2b80beca-2d8d-46a1-8408-4480fa6f7d79" config-ref="Database_Config1">
+					<db:sql ><![CDATA[SELECT * FROM world.countrylanguage;]]></db:sql>
+				</db:select>
+				<ee:transform doc:name="Transform Message" doc:id="b838a4ef-d082-4717-89de-69461c789815">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			</route>
+		</scatter-gather>
+		<ee:transform doc:name="Transform Message" doc:id="33f3e25e-fb6f-4521-bc63-0153b8b43f4f" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+flatten(payload..payload)]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
